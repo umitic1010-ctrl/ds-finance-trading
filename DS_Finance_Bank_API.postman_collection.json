@@ -1,0 +1,247 @@
+{
+  "info": {
+    "name": "DS Finance Bank - REST API",
+    "description": "Complete REST API Collection for DS Finance Bank",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "basic",
+    "basic": [
+      {
+        "key": "username",
+        "value": "employee1",
+        "type": "string"
+      },
+      {
+        "key": "password",
+        "value": "employeepass",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/ds-finance-bank-web/api",
+      "type": "string"
+    },
+    {
+      "key": "customerNumber",
+      "value": "CUST001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Bank Management",
+      "item": [
+        {
+          "name": "Initialize Bank",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bank/init",
+              "host": ["{{baseUrl}}"],
+              "path": ["bank", "init"]
+            }
+          }
+        },
+        {
+          "name": "Get Bank Volume",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bank/volume",
+              "host": ["{{baseUrl}}"],
+              "path": ["bank", "volume"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer Management",
+      "item": [
+        {
+          "name": "Create Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerNumber\": \"CUST001\",\n  \"firstName\": \"Max\",\n  \"lastName\": \"Mustermann\",\n  \"address\": \"Musterstraße 1, 1010 Wien\",\n  \"email\": \"max.mustermann@example.com\",\n  \"phoneNumber\": \"+43 1 23456789\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/customers",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers"]
+            }
+          }
+        },
+        {
+          "name": "Get All Customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customers",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers"]
+            }
+          }
+        },
+        {
+          "name": "Search Customer by Name",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customers/search?name=Max",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", "search"],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "Max"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Customer by Number",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customers/{{customerNumber}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", "{{customerNumber}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trading Operations",
+      "item": [
+        {
+          "name": "Search Stocks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/trading/stocks/search?query=Apple",
+              "host": ["{{baseUrl}}"],
+              "path": ["trading", "stocks", "search"],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "Apple"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Depot",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/trading/depot/{{customerNumber}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["trading", "depot", "{{customerNumber}}"]
+            }
+          }
+        },
+        {
+          "name": "Buy Stocks (Employee)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerNumber\": \"CUST001\",\n  \"stockSymbol\": \"AAPL\",\n  \"quantity\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trading/buy",
+              "host": ["{{baseUrl}}"],
+              "path": ["trading", "buy"]
+            }
+          }
+        },
+        {
+          "name": "Sell Stocks (Employee)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerNumber\": \"CUST001\",\n  \"stockSymbol\": \"AAPL\",\n  \"quantity\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trading/sell",
+              "host": ["{{baseUrl}}"],
+              "path": ["trading", "sell"]
+            }
+          }
+        },
+        {
+          "name": "Buy Stocks (Customer)",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "customer1",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "customerpass",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stockSymbol\": \"GOOGL\",\n  \"quantity\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trading/buy",
+              "host": ["{{baseUrl}}"],
+              "path": ["trading", "buy"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

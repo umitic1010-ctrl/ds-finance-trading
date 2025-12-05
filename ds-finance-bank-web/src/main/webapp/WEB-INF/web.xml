@@ -49,6 +49,12 @@
       <web-resource-name>DS Finance Bank</web-resource-name>
       <description>Only authenticated users are allowed to access the Web application.</description>
       <url-pattern>/*</url-pattern>
+      <http-method>GET</http-method>
+      <http-method>POST</http-method>
+      <http-method>PUT</http-method>
+      <http-method>DELETE</http-method>
+      <http-method>HEAD</http-method>
+      <http-method-omission>OPTIONS</http-method-omission>
     </web-resource-collection>
     <auth-constraint>
       <role-name>employee</role-name>

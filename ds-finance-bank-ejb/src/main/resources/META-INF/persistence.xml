@@ -3,11 +3,15 @@
              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_3_0.xsd">
   <persistence-unit name="ds-finance-bank-ref-persunit" transaction-type="JTA">
     <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
-    <jta-data-source>java:/datasources/DsFinanceBankDS</jta-data-source>
-    <exclude-unlisted-classes>false</exclude-unlisted-classes>
+    <jta-data-source>java:/jboss/datasources/DsFinanceBankDS</jta-data-source>
+    <class>net.froihofer.dsfinance.bank.ejb.entity.Customer</class>
+    <class>net.froihofer.dsfinance.bank.ejb.entity.DepotPosition</class>
+    <class>net.froihofer.dsfinance.bank.ejb.entity.BankVolume</class>
     <properties>
-      <property name="hibernate.hbm2ddl.auto" value="update"/>
-      <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>
+      <property name="jakarta.persistence.schema-generation.database.action" value="none"/>
+      <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+      <property name="hibernate.show_sql" value="false"/>
+      <property name="hibernate.format_sql" value="true"/>
     </properties>
   </persistence-unit>
 </persistence>

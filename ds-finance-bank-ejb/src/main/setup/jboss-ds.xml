@@ -1,2 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<datasources/>
+<!-- Datasource definition for DS Finance Bank Postgres instance -->
+<datasources xmlns="http://www.jboss.org/ironjacamar/schema">
+    <datasource jndi-name="java:/jboss/datasources/DsFinanceBankDS" pool-name="DsFinanceBankDS" enabled="true" use-java-context="true">
+        <connection-url>jdbc:postgresql://localhost:5432/ds_finance_bank</connection-url>
+        <driver>postgresql</driver>
+        <security>
+            <user-name>dsbank</user-name>
+            <password>dsbank</password>
+        </security>
+        <validation>
+            <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
+            <check-valid-connection-sql>SELECT 1</check-valid-connection-sql>
+            <background-validation>true</background-validation>
+        </validation>
+        <pool>
+            <min-pool-size>2</min-pool-size>
+            <max-pool-size>20</max-pool-size>
+            <prefill>true</prefill>
+        </pool>
+        <timeout>
+            <blocking-timeout-millis>5000</blocking-timeout-millis>
+            <idle-timeout-minutes>5</idle-timeout-minutes>
+        </timeout>
+    </datasource>
+</datasources>
