@@ -11,7 +11,7 @@ import net.froihofer.dsfinance.ws.trading.api.PublicStockQuote;
 import net.froihofer.dsfinance.ws.trading.api.TradingWebService;
 import net.froihofer.dsfinance.ws.trading.api.TradingWebServiceService;
 import net.froihofer.dsfinance.ws.trading.api.TradingWSException_Exception;
-import org.apache.cxf.transport.http.HTTPException;
+import jakarta.xml.ws.http.HTTPException;
 import org.eclipse.microprofile.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -288,11 +288,25 @@ public class TradingService {
     private boolean isUnauthorized(Throwable throwable) {
         Throwable cursor = throwable;
         while (cursor != null) {
-            if (cursor instanceof HTTPException http && http.getResponseCode() == 401) {
+            if (isHttpUnauthorized(cursor)) {
                 return true;
             }
             cursor = cursor.getCause();
         }
+        return false;
+    }
+
+    private boolean isHttpUnauthorized(Throwable throwable) {
+        if (throwable instanceof HTTPException) {
+            int responseCode = ((HTTPException) throwable).getStatusCode();
+            return responseCode == 401;
+        }
+
+        if (throwable instanceof jakarta.xml.ws.WebServiceException) {
+            String message = throwable.getMessage();
+            return message != null && message.contains("401");
+        }
+
         return false;
     }
 }
