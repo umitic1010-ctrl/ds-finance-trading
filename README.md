@@ -1,233 +1,103 @@
-# 🏦 DS Finance Bank - REST API Project
+# DS Finance Bank – Architekturplan
 
-[![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://www.oracle.com/java/)
-[![Jakarta EE](https://img.shields.io/badge/Jakarta%20EE-10-blue.svg)](https://jakarta.ee/)
-[![WildFly](https://img.shields.io/badge/WildFly-28.0.1-red.svg)](https://www.wildfly.org/)
+## 1. Ziel Architektur
+Der Bankserver gibt mehrschichtige Jakarta-EE-Anwendung in WildFly. Gibt Kundendepots, die verbinfdung zu TradingService-Webservice und Remote-Schnittstellen für customer/employee-clients. 
 
-Eine vollständige Banking-Anwendung mit REST API, entwickelt mit Java EE / Jakarta EE auf WildFly Application Server.
+## 2. Gesamtarchitektur
+- **Präsentationsschicht:** Zwei getrennte Java-Clients (Mitarbeiter, Kunde) auf Basis `ds-finance-bank-client`. Beide nutzen identische Fachlogik über gemeinsame Services, unterscheiden sich aber in Authentisierung und Funktionsumfang.
+- **Anwendungsschicht:** `ds-finance-bank-ejb` bündelt Geschäftslogik als Stateful/Stateless EJBs. Pro Use-Case-Gruppe werden Remote-Fassaden angeboten: `EmployeeBankingRemote` und `CustomerBankingRemote`.
+- **Integrationsschicht:** Ein Adapter kapselt den JAX-WS Zugriff auf das TradingService-WSDL. Authentifizierungsdaten liegen verschlüsselt in der Serverkonfiguration.
+- **Persistenzschicht:** JPA/Hibernate mit PostgreSQL zur Speicherung von Kunden, Depots, Trades sowie der bankweiten Volumensumme.
+- **Verteilung:** Alle serverseitigen Module werden über `ds-finance-bank-ear` als EAR auf WildFly deployt. Clients greifen via `jboss-ejb-client` auf die Remote-Interfaces zu.
 
-## 🎯 Projekt-Übersicht
+## 3. Technologiewahl
+- **Application Server:** WildFly 29, Jakarta EE 9.1 (CDI, EJB, JPA, Bean Validation, JAX-WS).
+- **Persistenz:** PostgreSQL 15 + JPA (Hibernate). Schema-Änderungen via Maven-Skripte/DDL.
+- **SOAP-Client:** Apache CXF Codegen; gesicherter Credential Store in WildFly.
+- **Sicherheit:** Container-Managed Security mit zwei Rollentypen (`EMPLOYEE`, `CUSTOMER`).
+- **Build/Tooling:** Maven Multi-Module, Surefire Tests, `wildfly-maven-plugin` zum Deploy.
 
-DS Finance Bank ist ein Bankensystem, das Kunden ermöglicht, Aktien zu kaufen und zu verkaufen. Die Bank nutzt einen externen Trading Service (SOAP Web Service) und verwaltet Depots für ihre Kunden.
+## 4. Modulverantwortung
+| Modul | Verantwortung |
+| --- | --- |
+| `ds-finance-bank-common` | Gemeinsame DTOs, Exceptions, Utility-Klassen (Geldbeträge, Trade-Typen). |
+| `ds-finance-bank-ejb` | Entitäten, Repositories, Fachservices, Remote-Schnittstellen, TradingService-Adapter. |
+| `ds-finance-bank-web` | Optionale REST-Fassade für spätere Integrationen (intern genutzt für Tests/Monitoring). |
+| `ds-finance-bank-client` | Swing/CLI-Clients für Mitarbeiter und Kunden mit Authentifizierung und Workflows. |
+| `ds-finance-bank-ear` | Packaging und Konfiguration (Datasources, Security-Domains, EJB-Deployment). |
 
-### ✨ Features
+## 5. Datenmodell
+### Tabellenentwurf
+- `customer` (id, customer_number, first_name, last_name, address, created_at, status).
+- `account_user` (id, login_name, hashed_password, role, customer_id nullable).
+- `stock` (symbol PK, name, currency).
+- `depot_holding` (id, customer_id, stock_symbol, quantity DECIMAL(18,4), average_price DECIMAL(18,4)).
+- `trade_history` (id, customer_id, stock_symbol, side, quantity DECIMAL(18,4), price DECIMAL(18,4), executed_at, trading_reference, status).
+- `bank_volume_ledger` (id, delta_amount DECIMAL(18,2), balance_after DECIMAL(18,2), reason, created_at).
 
-- ✅ **REST API** mit JAX-RS
-- ✅ **JPA/Hibernate** Datenpersistierung
-- ✅ **EJB** Business Logic
-- ✅ **Role-based Security** (Mitarbeiter & Kunden)
-- ✅ **Transaktionsmanagement**
-- ✅ **H2 Datenbank**
-- ✅ **Web Test Client**
-- ✅ **Postman Collection**
+### Regeln
+- Kundennummer wird über separate Sequenz generiert und ist eindeutig.
+- `depot_holding` nutzt optimistisches Locking, um parallele Trades abzusichern.
+- Jeder erfolgreiche Kauf/Verkauf erzeugt zwei Transaktionen: Depot-Anpassung und Volumenbuchung.
 
-## 🚀 Quick Start
+## 6. Serviceschicht
+- **CustomerService:** CRUD für Kunden, Suche per Nummer oder Name (Mitarbeiter-Use-Case).
+- **PortfolioService:** Liest Depotbestand, reichert ihn mit aktuellen Kursen an, berechnet Gesamtwert.
+- **TradingServiceFacade:** Einziger Kontaktpunkt zur Börse. Validiert Limits, führt SOAP-Call aus, verarbeitet Antwort.
+- **VolumeService:** Verwaltet die investierbare Summe der Bank und stellt Historie bereit.
+- **StockCatalogService:** Synchronisiert lokale Aktienliste mit dem TradingService-Angebot.
 
-### 1. Setup ausführen
-```powershell
-# Automatisches Setup (empfohlen)
-.\quick-setup.ps1
+## 7. Remote-Fassaden
+```text
+EmployeeBankingRemote
+	+ createCustomer(CustomerDTO)
+	+ searchCustomers(CustomerSearchCriteria)
+	+ listStocks()
+	+ placeOrder(customerId, TradeRequest)
+	+ getPortfolio(customerId)
+	+ getBankVolume()
 
-# Oder manuelles Setup (siehe SETUP_GUIDE.md)
+CustomerBankingRemote
+	+ listStocks()
+	+ placeOwnOrder(TradeRequest)
+	+ getOwnPortfolio()
+	+ getOrderHistory()
 ```
+Beide Fassaden delegieren auf dieselben Services, wenden jedoch zusätzliche Sicherheitsprüfungen an (Kunde darf nur auf eigene Daten zugreifen).
 
-### 2. WildFly starten
-```powershell
-cd C:\Programs\wildfly-28.0.1.Final-dev\bin
-.\standalone.bat
-```
+## 8. Sicherheitskonzept
+- Authentisierung erfolgt containerseitig (Database Realm). Clients übermitteln Benutzername/Passwort beim Aufbau des EJB-Contexts.
+- Autorisierung über `@RolesAllowed`. Methoden im Kunden-Facade prüfen zusätzlich die Kundennummer aus dem Principal gegen die Ziel-ID.
+- Mitarbeiterrollen dürfen Kunden kontextuell impersonieren, bleiben aber auditierbar (jede Aktion wird mit Mitarbeiter-ID protokolliert).
+- Netzwerkabsicherung mittels TLS (WildFly HTTPS + EJB over HTTPS/IIOP-TLS).
 
-### 3. API testen
-Browser öffnen: `http://localhost:8080/ds-finance-bank-web/api-test.html`
+## 9. SOAP-Integration mit TradingService
+- Codegenerierung erfolgt im Maven-Build (`cxf-codegen-plugin`).
+- Adapter `TradingGateway` kapselt Authentifizierung (HTTP Basic). Konfiguration liegt in `META-INF/trading.properties` und wird per `@Resource` geladen.
+- Zeitkritische Operationen (Quote Abruf) werden gecached, damit Depotabfragen performant bleiben. Cache-Invalidierung bei Orderabschluss.
+- Fehlerfälle (z. B. unzureichendes Volumen) werden in fachliche Exceptions übersetzt und bis zum Client durchgereicht.
 
-**Test-Benutzer:**
-- Employee: `employee1` / `employeepass`
-- Customer: `customer1` / `customerpass`
+## 10. Client-Implementierung
+- **Mitarbeiter-Client:** Desktop-GUI (Swing). Szenarien: Kunde anlegen, Kundensuche, Depotansicht, Ordermaske, Volumenübersicht.
+- **Kunden-Client:** Reduzierte Oberfläche (eigene Depotansicht, Orderplatzierung, Orderhistorie). Login direkt mit Kundenzugang.
+- Gemeinsame Basiskomponenten (`common-client` Package) kapseln Verbindungsaufbau, DTO-Mapping und Fehlerbehandlung.
 
-## 📁 Projekt-Struktur
+## 11. Ablauf Buy/Sell
+1. Client ruft Remote-Methode mit `TradeRequest`.
+2. `TradingServiceFacade` validiert Parameter, prüft Depot und Volumen.
+3. SOAP-Call an TradingService; bei Erfolg werden Depot und Volumen in einer Transaktion aktualisiert.
+4. Ergebnis (Durchschnittspreis, Status) wird in `trade_history` protokolliert und dem Client zurückgegeben.
+5. Bei Fehlern erfolgt Rollback und es wird eine fachliche Fehlermeldung geliefert.
 
-```
-ds-finance-bank/
-├── ds-finance-bank-common/       # DTOs und gemeinsame Klassen
-├── ds-finance-bank-ejb/          # Backend (Entities, Services, REST API)
-├── ds-finance-bank-web/          # Web Module (Test Client)
-├── ds-finance-bank-ear/          # Enterprise Archive
-├── ds-finance-bank-client/       # Optional: Desktop Client
-├── ds-finance-bank-frontend/     # 🎨 React Frontend (NEU!)
-│
-├── ZUSAMMENFASSUNG.md            # 📝 Vollständige Projekt-Dokumentation
-├── REST_API_DOKUMENTATION.md    # 📚 API Referenz
-├── SETUP_GUIDE.md                # 🛠️ Setup Anleitung
-├── DEPLOYMENT_CHECKLIST.md      # ✅ Test & Deployment Checkliste
-│
-├── quick-setup.ps1               # 🚀 Automatisches Setup
-├── setup-users.ps1               # 👥 Benutzer-Setup
-└── DS_Finance_Bank_API.postman_collection.json  # 📮 Postman Tests
-```
+## 12. Umsetzungsschritte
+1. **Basis-Setup:** Datenbank einrichten, Entities + Repositories erstellen, grundlegende EJB-Konfiguration.
+2. **Kundendienste:** CustomerService implementieren, Remote-Fassade für Mitarbeiter aufbauen.
+3. **Depot & Trading:** Holdings, Volumenverwaltung, SOAP-Adapter und Order-Workflows umsetzen.
+4. **Kunden-Fassade:** Authentisierung/Konto-Verknüpfung für Kunden, Schutz vor Fremdzugriffen.
+5. **Clients:** Mitarbeiter-Client zuerst, anschließend Kunden-Client, jeweils mit Integrationstests gegen Test-Server.
+6. **Abschluss:** Lasttests (Volumenkorrektheit), Fehlerbehandlung, Dokumentation aktualisieren.
 
-## 📖 Dokumentation
-
-| Dokument | Beschreibung |
-|----------|--------------|
-| **[ZUSAMMENFASSUNG.md](ZUSAMMENFASSUNG.md)** | Vollständige Projekt-Übersicht mit Architektur |
-| **[REST_API_DOKUMENTATION.md](REST_API_DOKUMENTATION.md)** | API Endpoints, Requests & Responses |
-| **[SETUP_GUIDE.md](SETUP_GUIDE.md)** | Schritt-für-Schritt Setup-Anleitung |
-| **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** | Checkliste für Deployment & Testing |
-
-## 🔧 Technologie-Stack
-
-- **Backend**: Jakarta EE 10, EJB 4.0, JPA 3.1, JAX-RS 3.1
-- **Server**: WildFly 28.0.1
-- **Datenbank**: H2 (embedded)
-- **Build**: Maven 3.x
-- **Java**: JDK 17
-- **Frontend**: HTML/JavaScript (Test Client)
-
-## 🌐 REST API Endpoints
-
-### Bank Management (Employee only)
-```http
-POST   /api/bank/init              # Bank initialisieren
-GET    /api/bank/volume            # Aktuelles Volumen
-```
-
-### Customer Management (Employee only)
-```http
-POST   /api/customers              # Kunde anlegen
-GET    /api/customers              # Alle Kunden
-GET    /api/customers/search       # Kunden suchen
-GET    /api/customers/{number}     # Einzelner Kunde
-```
-
-### Trading (Employee & Customer)
-```http
-GET    /api/trading/stocks/search  # Aktien suchen
-GET    /api/trading/depot/{number} # Depot anzeigen
-POST   /api/trading/buy            # Aktien kaufen
-POST   /api/trading/sell           # Aktien verkaufen
-```
-
-**Basis-URL**: `http://localhost:8080/ds-finance-bank-web/api`
-
-## 🔐 Security
-
-- **Basic Authentication** mit WildFly Application Realm
-- **2 Rollen**:
-  - `employee` - Voller Zugriff auf alle Funktionen
-  - `customer` - Nur eigene Daten und Trading
-
-## 📊 Architektur
-
-```
-Frontend (HTML/JS)
-      ↓
-REST API Layer (JAX-RS)
-      ↓
-Business Logic (EJB)
-      ↓
-Persistence Layer (JPA)
-      ↓
-Database (H2)
-```
-
-## 🧪 Testing
-
-### Mit Web Client
-1. Öffne `http://localhost:8080/ds-finance-bank-web/api-test.html`
-2. Login als `employee1` / `employeepass`
-3. Teste alle Funktionen
-
-### Mit Postman
-1. Importiere `DS_Finance_Bank_API.postman_collection.json`
-2. Wähle Environment oder passe baseUrl an
-3. Führe Requests aus
-
-### Mit cURL
-```bash
-# Bank initialisieren
-curl -X POST http://localhost:8080/ds-finance-bank-web/api/bank/init \
-  -u employee1:employeepass
-
-# Kunde anlegen
-curl -X POST http://localhost:8080/ds-finance-bank-web/api/customers \
-  -H "Content-Type: application/json" \
-  -u employee1:employeepass \
-  -d '{"customerNumber":"CUST001","firstName":"Max","lastName":"Mustermann"}'
-
-# Depot abrufen
-curl -X GET http://localhost:8080/ds-finance-bank-web/api/trading/depot/CUST001 \
-  -u employee1:employeepass
-```
-
-## 🛠️ Development
-
-### Build
-```bash
-mvn clean install
-```
-
-### Deploy
-```bash
-# Kopiere .ear file ins WildFly deployments Verzeichnis
-copy ds-finance-bank-ear\target\*.ear C:\Programs\wildfly-28.0.1.Final-dev\standalone\deployments\
-```
-
-### Hot Reload
-WildFly erkennt automatisch neue Deployments im deployments Verzeichnis.
-
-## ⚠️ TODO / Nächste Schritte
-
-- [ ] **SOAP Integration**: TradingService mit echtem Web Service verbinden
-  - WSDL: https://edu.dedisys.org/ds-finance/ws/TradingService?wsdl
-  - WSDL in `wsdl-consumed/` ablegen
-  - Maven Build → Auto-Generate Java Klassen
-  
-- [ ] **Frontend**: React/Angular/Vue.js entwickeln
-- [ ] **Testing**: Unit & Integration Tests
-- [ ] **Validation**: Bean Validation hinzufügen
-- [ ] **Account Management**: Automatisches Anlegen von WildFly-Usern
-
-## 📝 Projektanforderungen
-
-| Anforderung | Status |
-|-------------|--------|
-| Kunden verwalten | ✅ |
-| Aktien suchen | ✅ |
-| Aktien kaufen/verkaufen | ✅ |
-| Depot verwalten | ✅ |
-| Bank-Volumen tracking | ✅ |
-| Mitarbeiter-Client | ✅ |
-| Kunden-Client | ✅ |
-| Security | ✅ |
-| Persistierung (JPA) | ✅ |
-| Web Service Call | ⚠️ (TODO) |
-
-## 🤝 Team
-
-Projekt für: Distributed Systems - Finance Bank
-Universität: [Deine Uni]
-Semester: WS 2024/25
-
-## 📄 Lizenz
-
-Dieses Projekt ist nur für Lehrzwecke bestimmt.
-Trading Service Daten dürfen nur im Rahmen dieser Lehrveranstaltung verwendet werden.
-
-## 🆘 Support
-
-Bei Problemen:
-1. Prüfe [SETUP_GUIDE.md](SETUP_GUIDE.md) → Troubleshooting
-2. Prüfe WildFly Logs: `WILDFLY_HOME/standalone/log/server.log`
-3. Prüfe [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)
-
-## 🎓 Weiterführende Links
-
-- [WildFly Documentation](https://docs.wildfly.org/)
-- [Jakarta EE Tutorial](https://jakarta.ee/learn/)
-- [JAX-RS Specification](https://jakarta.ee/specifications/restful-ws/)
-- [JPA Specification](https://jakarta.ee/specifications/persistence/)
-
----
-
-**Viel Erfolg mit dem Projekt!** 🚀
-
+## 13. Offene Fragen
+- Welche Daten liefert das TradingService exakt (Preis, verfügbare Menge, Währung)?
+- Müssen historische Kurse gespeichert werden oder reicht On-Demand-Abruf?
+- Benötigt der Kunden-Client Offline-Fähigkeiten (z. B. Order-Entwürfe)?
