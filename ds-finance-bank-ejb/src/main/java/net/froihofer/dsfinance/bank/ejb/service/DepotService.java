@@ -3,19 +3,16 @@ package net.froihofer.dsfinance.bank.ejb.service;
 import jakarta.annotation.security.PermitAll;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.TypedQuery;
-import net.froihofer.dsfinance.bank.ejb.entity.Customer;
-import net.froihofer.dsfinance.bank.ejb.entity.DepotPosition;
 import net.froihofer.dsfinance.bank.common.dto.DepotDTO;
 import net.froihofer.dsfinance.bank.common.dto.DepotPositionDTO;
+import net.froihofer.dsfinance.bank.ejb.dao.DepotPositionDao;
+import net.froihofer.dsfinance.bank.ejb.entity.Customer;
+import net.froihofer.dsfinance.bank.ejb.entity.DepotPosition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Service Bean for Depot Management
@@ -26,8 +23,8 @@ import java.util.stream.Collectors;
 public class DepotService {
     private static final Logger log = LoggerFactory.getLogger(DepotService.class);
 
-    @PersistenceContext(unitName = "ds-finance-bank-ref-persunit")
-    private EntityManager em;
+    @EJB
+    private DepotPositionDao depotPositionDao;
 
     @EJB
     private TradingService tradingService;
@@ -38,10 +35,7 @@ public class DepotService {
     public DepotDTO getDepot(Customer customer) {
         log.debug("Getting depot for customer: {}", customer.getCustomerNumber());
 
-        TypedQuery<DepotPosition> query = em.createNamedQuery("DepotPosition.findByCustomer", DepotPosition.class);
-        query.setParameter("customerId", customer.getId());
-
-        List<DepotPosition> positions = query.getResultList();
+        List<DepotPosition> positions = depotPositionDao.findByCustomerId(customer.getId());
 
         DepotDTO depotDTO = new DepotDTO();
         depotDTO.setCustomerId(customer.getId());
@@ -82,11 +76,11 @@ public class DepotService {
         if (position == null) {
             // Create new position
             position = new DepotPosition(customer, stockSymbol, stockName, quantity);
-            em.persist(position);
+            depotPositionDao.persist(position);
         } else {
             // Update existing position
             position.addQuantity(quantity);
-            em.merge(position);
+            depotPositionDao.merge(position);
         }
     }
 
@@ -107,9 +101,9 @@ public class DepotService {
         position.subtractQuantity(quantity);
 
         if (position.getQuantity() == 0) {
-            em.remove(position);
+            depotPositionDao.remove(position);
         } else {
-            em.merge(position);
+            depotPositionDao.merge(position);
         }
 
         return true;
@@ -127,12 +121,7 @@ public class DepotService {
      * Find depot position for customer and stock (internal use)
      */
     private DepotPosition findPosition(Customer customer, String stockSymbol) {
-        TypedQuery<DepotPosition> query = em.createNamedQuery("DepotPosition.findByCustomerAndStock", DepotPosition.class);
-        query.setParameter("customerId", customer.getId());
-        query.setParameter("stockSymbol", stockSymbol);
-
-        List<DepotPosition> positions = query.getResultList();
-        return positions.isEmpty() ? null : positions.get(0);
+        return depotPositionDao.findByCustomerAndStock(customer.getId(), stockSymbol);
     }
 }
 

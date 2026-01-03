@@ -1,17 +1,15 @@
 package net.froihofer.dsfinance.bank.ejb.service;
 
 import jakarta.annotation.security.PermitAll;
+import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.TypedQuery;
+import net.froihofer.dsfinance.bank.ejb.dao.BankVolumeDao;
 import net.froihofer.dsfinance.bank.ejb.entity.BankVolume;
 import net.froihofer.dsfinance.bank.common.dto.BankVolumeDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * Service Bean for managing Bank's investable volume
@@ -22,8 +20,8 @@ import java.util.List;
 public class BankVolumeService {
     private static final Logger log = LoggerFactory.getLogger(BankVolumeService.class);
 
-    @PersistenceContext(unitName = "ds-finance-bank-ref-persunit")
-    private EntityManager em;
+    @EJB
+    private BankVolumeDao bankVolumeDao;
 
     private static final BigDecimal INITIAL_VOLUME = new BigDecimal("1000000000.00"); // 1 billion
 
@@ -36,8 +34,7 @@ public class BankVolumeService {
         if (volume == null) {
             log.info("Initializing bank volume with {} USD", INITIAL_VOLUME);
             volume = new BankVolume(INITIAL_VOLUME);
-            em.persist(volume);
-            em.flush(); // Force immediate persistence
+            bankVolumeDao.persist(volume);
             log.info("Bank volume initialized successfully");
         } else {
             log.debug("Bank volume already exists");
@@ -73,7 +70,7 @@ public class BankVolumeService {
         }
 
         volume.decreaseVolume(amount);
-        em.merge(volume);
+        bankVolumeDao.merge(volume);
     }
 
     /**
@@ -87,7 +84,7 @@ public class BankVolumeService {
         }
 
         volume.increaseVolume(amount);
-        em.merge(volume);
+        bankVolumeDao.merge(volume);
     }
 
     /**
@@ -106,9 +103,7 @@ public class BankVolumeService {
      * Get current bank volume entity (internal use)
      */
     private BankVolume getCurrentBankVolume() {
-        TypedQuery<BankVolume> query = em.createNamedQuery("BankVolume.findCurrent", BankVolume.class);
-        List<BankVolume> volumes = query.getResultList();
-        return volumes.isEmpty() ? null : volumes.get(0);
+        return bankVolumeDao.findCurrent();
     }
 
     /**

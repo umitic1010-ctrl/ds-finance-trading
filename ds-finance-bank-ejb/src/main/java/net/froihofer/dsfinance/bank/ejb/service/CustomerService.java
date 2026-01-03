@@ -1,12 +1,11 @@
 package net.froihofer.dsfinance.bank.ejb.service;
 
 import jakarta.annotation.security.PermitAll;
+import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.TypedQuery;
-import net.froihofer.dsfinance.bank.ejb.entity.Customer;
 import net.froihofer.dsfinance.bank.common.dto.CustomerDTO;
+import net.froihofer.dsfinance.bank.ejb.dao.CustomerDao;
+import net.froihofer.dsfinance.bank.ejb.entity.Customer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,8 +21,8 @@ import java.util.stream.Collectors;
 public class CustomerService {
     private static final Logger log = LoggerFactory.getLogger(CustomerService.class);
 
-    @PersistenceContext(unitName = "ds-finance-bank-ref-persunit")
-    private EntityManager em;
+    @EJB
+    private CustomerDao customerDao;
 
     /**
      * Create a new customer
@@ -44,8 +43,7 @@ public class CustomerService {
         customer.setPostalCode(customerDTO.getPostalCode());
         customer.setStatus(customerDTO.getStatus());
 
-        em.persist(customer);
-        em.flush();
+        customerDao.persist(customer);
 
         return toDTO(customer);
     }
@@ -56,15 +54,8 @@ public class CustomerService {
     public CustomerDTO findByCustomerNumber(String customerNumber) {
         log.debug("Finding customer by number: {}", customerNumber);
 
-        TypedQuery<Customer> query = em.createNamedQuery("Customer.findByCustomerNumber", Customer.class);
-        query.setParameter("customerNumber", customerNumber);
-
-        List<Customer> customers = query.getResultList();
-        if (customers.isEmpty()) {
-            return null;
-        }
-
-        return toDTO(customers.get(0));
+        Customer customer = customerDao.findByCustomerNumber(customerNumber);
+        return customer == null ? null : toDTO(customer);
     }
 
     /**
@@ -73,10 +64,7 @@ public class CustomerService {
     public List<CustomerDTO> searchByName(String name) {
         log.debug("Searching customers by name: {}", name);
 
-        TypedQuery<Customer> query = em.createNamedQuery("Customer.findByName", Customer.class);
-        query.setParameter("name", "%" + name + "%");
-
-        return query.getResultList().stream()
+        return customerDao.findByName(name).stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
     }
@@ -87,9 +75,7 @@ public class CustomerService {
     public List<CustomerDTO> getAllCustomers() {
         log.debug("Getting all customers");
 
-        TypedQuery<Customer> query = em.createNamedQuery("Customer.findAll", Customer.class);
-
-        return query.getResultList().stream()
+        return customerDao.findAll().stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
     }
@@ -98,18 +84,14 @@ public class CustomerService {
      * Get customer entity by ID (internal use)
      */
     public Customer getCustomerById(Long id) {
-        return em.find(Customer.class, id);
+        return customerDao.findById(id);
     }
 
     /**
      * Get customer entity by customer number (internal use)
      */
     public Customer getCustomerEntityByNumber(String customerNumber) {
-        TypedQuery<Customer> query = em.createNamedQuery("Customer.findByCustomerNumber", Customer.class);
-        query.setParameter("customerNumber", customerNumber);
-
-        List<Customer> customers = query.getResultList();
-        return customers.isEmpty() ? null : customers.get(0);
+        return customerDao.findByCustomerNumber(customerNumber);
     }
 
     /**
