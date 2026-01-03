@@ -18,6 +18,13 @@
     <jackson.version>2.14.2</jackson.version>
     <jakartaee.version>10.0.0</jakartaee.version>
     <junit.version>4.13.2</junit.version>
+    <flyway.version>9.22.3</flyway.version>
+    <postgresql.version>42.7.3</postgresql.version>
+    <flyway.url>jdbc:postgresql://localhost:5432/ds_finance_bank</flyway.url>
+    <flyway.user>dsbank</flyway.user>
+    <flyway.password>dsbank</flyway.password>
+    <flyway.baselineOnMigrate>false</flyway.baselineOnMigrate>
+    <flyway.baselineVersion>1</flyway.baselineVersion>
   </properties>
   
   <modules>
@@ -35,4 +42,53 @@
       <url>https://repository.jboss.org/nexus/content/repositories/thirdparty-releases</url>
     </repository>
   </repositories>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-maven-plugin</artifactId>
+        <version>${flyway.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <url>${flyway.url}</url>
+          <user>${flyway.user}</user>
+          <password>${flyway.password}</password>
+          <locations>
+            <location>filesystem:ds-finance-bank-ejb/src/main/resources/db/migration</location>
+          </locations>
+          <baselineOnMigrate>${flyway.baselineOnMigrate}</baselineOnMigrate>
+          <baselineVersion>${flyway.baselineVersion}</baselineVersion>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>adopt</id>
+      <properties>
+        <flyway.baselineOnMigrate>true</flyway.baselineOnMigrate>
+      </properties>
+    </profile>
+    <profile>
+      <id>env-flyway</id>
+      <activation>
+        <property>
+          <name>env.FLYWAY_URL</name>
+        </property>
+      </activation>
+      <properties>
+        <flyway.url>${env.FLYWAY_URL}</flyway.url>
+        <flyway.user>${env.FLYWAY_USER}</flyway.user>
+        <flyway.password>${env.FLYWAY_PASSWORD}</flyway.password>
+      </properties>
+    </profile>
+  </profiles>
 </project>

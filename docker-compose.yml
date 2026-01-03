@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:15
+    container_name: ds-finance-bank-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ds_finance_bank}
+      POSTGRES_USER: ${POSTGRES_USER:-dsbank}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dsbank}
+    volumes:
+      - ds_finance_bank_pgdata:/var/lib/postgresql/data
+
+volumes:
+  ds_finance_bank_pgdata:
