@@ -302,12 +302,23 @@ public class TradingService {
             return responseCode == 401;
         }
 
-        if (throwable instanceof jakarta.xml.ws.WebServiceException) {
-            String message = throwable.getMessage();
-            return message != null && message.contains("401");
+        // CXF HTTPException without direct dependency (detected via reflection)
+        if ("org.apache.cxf.transport.http.HTTPException".equals(throwable.getClass().getName())) {
+            try {
+                Object code = throwable.getClass().getMethod("getResponseCode").invoke(throwable);
+                if (code instanceof Integer && ((Integer) code) == 401) {
+                    return true;
+                }
+            } catch (Exception ignored) {
+                // fall through to message check
+            }
+        }
+
+        String message = throwable.getMessage();
+        if (message != null && message.contains("401")) {
+            return true;
         }
 
         return false;
     }
 }
-
