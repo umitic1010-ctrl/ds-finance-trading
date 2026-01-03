@@ -14,12 +14,12 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    const { username, role } = JSON.parse(auth);
+    const { email, role, customerId, customerNumber } = JSON.parse(auth);
 
     authService
       .validate()
       .then((validatedUser) => {
-        setUser(validatedUser || { username, role });
+        setUser(validatedUser || { email, role, customerId, customerNumber });
       })
       .catch(() => {
         localStorage.removeItem('auth');
@@ -28,12 +28,16 @@ export const AuthProvider = ({ children }) => {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (username, password, role) => {
-    const userData = await authService.login(username, password);
-    // Store username, role AND password for subsequent API calls
-    const authData = { ...userData, password };
+  const login = async (email, password) => {
+    const authData = await authService.login(email, password);
     localStorage.setItem('auth', JSON.stringify(authData));
-    setUser(userData);
+    setUser({
+      email: authData.email || email,
+      role: authData.role,
+      customerId: authData.customerId,
+      customerNumber: authData.customerNumber,
+    });
+    return authData;
   };
 
   const logout = () => {

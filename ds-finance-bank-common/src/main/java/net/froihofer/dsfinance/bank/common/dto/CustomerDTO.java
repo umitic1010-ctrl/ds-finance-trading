@@ -20,6 +20,7 @@ public class CustomerDTO implements Serializable {
     private String postalCode;
     private String status;
     private String createdAt;
+    private String password;
 
     public CustomerDTO() {
     }
@@ -126,5 +127,13 @@ public class CustomerDTO implements Serializable {
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

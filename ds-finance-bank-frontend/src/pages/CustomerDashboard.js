@@ -12,14 +12,14 @@ const CustomerDashboard = () => {
       <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h5" gutterBottom>
-            Willkommen, {user?.username}!
+            Willkommen, {user?.email}!
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Verwalten Sie Ihr Portfolio und handeln Sie mit Aktien.
           </Typography>
         </Paper>
 
-        <TradingPanel isEmployee={false} customerNumber={user?.username} />
+        <TradingPanel isEmployee={false} customerNumber={user?.customerNumber} />
       </Container>
     </Layout>
   );

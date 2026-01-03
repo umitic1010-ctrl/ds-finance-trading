@@ -9,15 +9,16 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
-export const createAuthClient = (username, password) =>
-  axios.create({
-    baseURL: API_BASE_URL,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Basic ${btoa(`${username}:${password}`)}`,
-    },
-    withCredentials: true,
-  });
+const BASIC_CREDENTIALS = {
+  employee: {
+    user: process.env.REACT_APP_BASIC_EMPLOYEE_USER,
+    pass: process.env.REACT_APP_BASIC_EMPLOYEE_PASS,
+  },
+  customer: {
+    user: process.env.REACT_APP_BASIC_CUSTOMER_USER,
+    pass: process.env.REACT_APP_BASIC_CUSTOMER_PASS,
+  },
+};
 
 // Request Interceptor - fügt Auth Header hinzu
 apiClient.interceptors.request.use(
@@ -26,11 +27,13 @@ apiClient.interceptors.request.use(
     if (auth) {
       try {
         const authData = JSON.parse(auth);
-        // Check if we have the password stored (from login)
-        if (authData.password) {
-          config.headers.Authorization = `Basic ${btoa(`${authData.username}:${authData.password}`)}`;
-        } else {
-          console.warn('No password in auth data - user needs to login again');
+        if (authData.token) {
+          config.headers['X-Auth-Token'] = authData.token;
+        }
+        const role = authData.role;
+        const basic = BASIC_CREDENTIALS[role];
+        if (basic?.user && basic?.pass) {
+          config.headers.Authorization = `Basic ${btoa(`${basic.user}:${basic.pass}`)}`;
         }
       } catch (e) {
         console.error('Error parsing auth data:', e);

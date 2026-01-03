@@ -33,7 +33,8 @@ const CustomerManagement = () => {
     lastName: '',
     address: '',
     email: '',
-    phoneNumber: ''
+    phoneNumber: '',
+    password: ''
   });
 
   const handleSearch = async () => {
@@ -87,7 +88,8 @@ const CustomerManagement = () => {
         lastName: '',
         address: '',
         email: '',
-        phoneNumber: ''
+        phoneNumber: '',
+        password: ''
       });
       handleSearch();
     } catch (error) {
@@ -208,6 +210,15 @@ const CustomerManagement = () => {
             variant="outlined"
             value={newCustomer.email}
             onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Initiales Passwort"
+            type="password"
+            fullWidth
+            variant="outlined"
+            value={newCustomer.password}
+            onChange={(e) => setNewCustomer({ ...newCustomer, password: e.target.value })}
           />
           <TextField
             margin="dense"

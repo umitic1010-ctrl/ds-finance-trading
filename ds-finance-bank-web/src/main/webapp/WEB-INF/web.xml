@@ -44,27 +44,7 @@
     <welcome-file>index.html</welcome-file>
   </welcome-file-list>
   
-  <security-constraint>
-    <web-resource-collection>
-      <web-resource-name>DS Finance Bank</web-resource-name>
-      <description>Only authenticated users are allowed to access the Web application.</description>
-      <url-pattern>/*</url-pattern>
-      <http-method>GET</http-method>
-      <http-method>POST</http-method>
-      <http-method>PUT</http-method>
-      <http-method>DELETE</http-method>
-      <http-method>HEAD</http-method>
-      <http-method-omission>OPTIONS</http-method-omission>
-    </web-resource-collection>
-    <auth-constraint>
-      <role-name>employee</role-name>
-      <role-name>customer</role-name>
-    </auth-constraint>
-        <!--user-data-constraint>
-      <description/>
-      <transport-guarantee>CONFIDENTIAL</transport-guarantee>
-    </user-data-constraint-->
-  </security-constraint>
+  <!-- REST API authentication is handled by JWT filter, not container BASIC auth. -->
   <login-config>
     <auth-method>BASIC</auth-method>
     <realm-name>DS Finance Bank</realm-name>

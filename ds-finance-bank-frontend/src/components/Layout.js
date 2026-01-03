@@ -23,7 +23,7 @@ const Layout = ({ children, title }) => {
             DS Finance Bank {title && `- ${title}`}
           </Typography>
           <Typography variant="body1" sx={{ mr: 2 }}>
-            {user?.username} ({user?.role === 'employee' ? 'Mitarbeiter' : 'Kunde'})
+            {user?.email} ({user?.role === 'employee' ? 'Mitarbeiter' : 'Kunde'})
           </Typography>
           <Button color="inherit" onClick={handleLogout} startIcon={<LogoutIcon />}>
             Abmelden

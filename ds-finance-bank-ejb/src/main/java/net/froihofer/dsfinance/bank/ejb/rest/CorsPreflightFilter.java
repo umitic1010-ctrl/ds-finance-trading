@@ -38,7 +38,7 @@ public class CorsPreflightFilter implements ContainerRequestFilter {
             Response.ok()
                 .header("Access-Control-Allow-Origin", origin)
                 .header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
-                .header("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept")
+                .header("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, X-Auth-Token, X-App-JWT")
                 .header("Access-Control-Allow-Credentials", "true")
                 .header("Access-Control-Max-Age", "3600")
                 .header("Vary", "Origin")

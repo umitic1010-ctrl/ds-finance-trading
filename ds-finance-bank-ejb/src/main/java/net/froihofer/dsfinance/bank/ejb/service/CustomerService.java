@@ -3,9 +3,14 @@ package net.froihofer.dsfinance.bank.ejb.service;
 import jakarta.annotation.security.PermitAll;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 import net.froihofer.dsfinance.bank.common.dto.CustomerDTO;
+import net.froihofer.dsfinance.bank.ejb.auth.PasswordHasher;
 import net.froihofer.dsfinance.bank.ejb.dao.CustomerDao;
+import net.froihofer.dsfinance.bank.ejb.dao.PersonDao;
 import net.froihofer.dsfinance.bank.ejb.entity.Customer;
+import net.froihofer.dsfinance.bank.ejb.entity.Person;
+import org.eclipse.microprofile.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,19 +29,56 @@ public class CustomerService {
     @EJB
     private CustomerDao customerDao;
 
+    @EJB
+    private PersonDao personDao;
+
+    @EJB
+    private PasswordHasher passwordHasher;
+
+    @Inject
+    private Config config;
+
     /**
      * Create a new customer
      */
     public CustomerDTO createCustomer(CustomerDTO customerDTO) {
         log.info("Creating new customer: {} {}", customerDTO.getFirstName(), customerDTO.getLastName());
 
+        if (customerDTO.getEmail() == null || customerDTO.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+        if (customerDTO.getFirstName() == null || customerDTO.getFirstName().isBlank()) {
+            throw new IllegalArgumentException("First name is required");
+        }
+        if (customerDTO.getLastName() == null || customerDTO.getLastName().isBlank()) {
+            throw new IllegalArgumentException("Last name is required");
+        }
+        String password = customerDTO.getPassword();
+        if (password == null || password.isBlank()) {
+            password = config == null ? null : config.getOptionalValue("auth.defaultCustomerPassword", String.class).orElse(null);
+        }
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Initial password is required");
+        }
+
+        Person person = new Person();
+        person.setEmail(customerDTO.getEmail());
+        person.setFirstName(customerDTO.getFirstName());
+        person.setLastName(customerDTO.getLastName());
+        person.setRole("CUSTOMER");
+        person.setStatus(customerDTO.getStatus() != null ? customerDTO.getStatus() : "ACTIVE");
+
+        PasswordHasher.PasswordHash hash = passwordHasher.hashPassword(password);
+        person.setPasswordHash(hash.hash());
+        person.setPasswordSalt(hash.salt());
+        person.setPasswordIterations(hash.iterations());
+        personDao.persist(person);
+
         Customer customer = new Customer(
             customerDTO.getCustomerNumber(),
-            customerDTO.getFirstName(),
-            customerDTO.getLastName(),
             customerDTO.getAddress()
         );
-        customer.setEmail(customerDTO.getEmail());
+        customer.setPerson(person);
         customer.setPhoneNumber(customerDTO.getPhoneNumber());
         customer.setCity(customerDTO.getCity());
         customer.setCountry(customerDTO.getCountry());
@@ -101,10 +143,12 @@ public class CustomerService {
         CustomerDTO dto = new CustomerDTO();
         dto.setId(customer.getId());
         dto.setCustomerNumber(customer.getCustomerNumber());
-        dto.setFirstName(customer.getFirstName());
-        dto.setLastName(customer.getLastName());
+        if (customer.getPerson() != null) {
+            dto.setFirstName(customer.getPerson().getFirstName());
+            dto.setLastName(customer.getPerson().getLastName());
+            dto.setEmail(customer.getPerson().getEmail());
+        }
         dto.setAddress(customer.getAddress());
-        dto.setEmail(customer.getEmail());
         dto.setPhoneNumber(customer.getPhoneNumber());
         dto.setCity(customer.getCity());
         dto.setCountry(customer.getCountry());

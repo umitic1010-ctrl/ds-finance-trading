@@ -7,19 +7,14 @@ import {
   Button,
   Typography,
   Box,
-  Alert,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem
+  Alert
 } from '@mui/material';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('employee');
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -28,14 +23,14 @@ const Login = () => {
     e.preventDefault();
     setError('');
 
-    if (!username || !password) {
+    if (!email || !password) {
       setError('Bitte alle Felder ausfüllen');
       return;
     }
 
     try {
-      login(username, password, role);
-      navigate(role === 'employee' ? '/employee' : '/customer');
+      const authData = await login(email, password);
+      navigate(authData.role === 'employee' ? '/employee' : '/customer');
     } catch (err) {
       setError('Login fehlgeschlagen. Bitte Zugangsdaten prüfen.');
     }
@@ -73,13 +68,13 @@ const Login = () => {
               margin="normal"
               required
               fullWidth
-              id="username"
-              label="Benutzername"
-              name="username"
-              autoComplete="username"
+              id="email"
+              label="E-Mail"
+              name="email"
+              autoComplete="email"
               autoFocus
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
             <TextField
               margin="normal"
@@ -93,19 +88,6 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <FormControl fullWidth margin="normal">
-              <InputLabel id="role-label">Rolle</InputLabel>
-              <Select
-                labelId="role-label"
-                id="role"
-                value={role}
-                label="Rolle"
-                onChange={(e) => setRole(e.target.value)}
-              >
-                <MenuItem value="employee">Mitarbeiter</MenuItem>
-                <MenuItem value="customer">Kunde</MenuItem>
-              </Select>
-            </FormControl>
             <Button
               type="submit"
               fullWidth
@@ -121,10 +103,10 @@ const Login = () => {
               <strong>Test-Benutzer:</strong>
             </Typography>
             <Typography variant="caption" display="block">
-              Mitarbeiter: employee1 / employeepass
+              Mitarbeiter: example_e@banking.de / employeepass
             </Typography>
             <Typography variant="caption" display="block">
-              Kunde: customer1 / customerpass
+              Kunde: example_c@banking.de / customerpass
             </Typography>
           </Box>
         </Paper>

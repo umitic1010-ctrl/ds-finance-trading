@@ -7,7 +7,9 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
+import net.froihofer.dsfinance.bank.ejb.auth.JwtPrincipal;
 import net.froihofer.dsfinance.bank.ejb.service.BankFacadeService;
+import net.froihofer.dsfinance.bank.ejb.service.CustomerService;
 import net.froihofer.dsfinance.bank.common.dto.DepotDTO;
 import net.froihofer.dsfinance.bank.common.dto.StockDTO;
 import net.froihofer.dsfinance.bank.common.dto.TradeRequestDTO;
@@ -29,6 +31,9 @@ public class TradingRestService {
 
     @EJB
     private BankFacadeService bankFacadeService;
+
+    @EJB
+    private CustomerService customerService;
 
     @Context
     private SecurityContext securityContext;
@@ -71,11 +76,12 @@ public class TradingRestService {
 
             // Security check: customers can only access their own depot
             if (securityContext.isUserInRole("customer")) {
-                String username = securityContext.getUserPrincipal().getName();
-                if (!username.equals(customerNumber)) {
+                String ownCustomerNumber = resolveCustomerNumber();
+                if (ownCustomerNumber == null) {
                     return Response.status(Response.Status.FORBIDDEN)
-                            .entity(new ErrorResponse("You can only access your own depot")).build();
+                            .entity(new ErrorResponse("Customer identity is required")).build();
                 }
+                customerNumber = ownCustomerNumber;
             }
 
             DepotDTO depot = bankFacadeService.getDepot(customerNumber);
@@ -105,7 +111,11 @@ public class TradingRestService {
 
             // If customer, override customerNumber with authenticated user
             if (securityContext.isUserInRole("customer")) {
-                customerNumber = securityContext.getUserPrincipal().getName();
+                customerNumber = resolveCustomerNumber();
+                if (customerNumber == null || customerNumber.trim().isEmpty()) {
+                    return Response.status(Response.Status.FORBIDDEN)
+                            .entity(new ErrorResponse("Customer identity is required")).build();
+                }
             }
 
             if (customerNumber == null || customerNumber.trim().isEmpty()) {
@@ -145,7 +155,11 @@ public class TradingRestService {
 
             // If customer, override customerNumber with authenticated user
             if (securityContext.isUserInRole("customer")) {
-                customerNumber = securityContext.getUserPrincipal().getName();
+                customerNumber = resolveCustomerNumber();
+                if (customerNumber == null || customerNumber.trim().isEmpty()) {
+                    return Response.status(Response.Status.FORBIDDEN)
+                            .entity(new ErrorResponse("Customer identity is required")).build();
+                }
             }
 
             if (customerNumber == null || customerNumber.trim().isEmpty()) {
@@ -168,6 +182,21 @@ public class TradingRestService {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse(e.getMessage())).build();
         }
+    }
+
+    private String resolveCustomerNumber() {
+        if (securityContext == null || securityContext.getUserPrincipal() == null) {
+            return null;
+        }
+        if (!(securityContext.getUserPrincipal() instanceof JwtPrincipal principal)) {
+            return null;
+        }
+        Long customerId = principal.getCustomerId();
+        if (customerId == null) {
+            return null;
+        }
+        var customer = customerService.getCustomerById(customerId);
+        return customer != null ? customer.getCustomerNumber() : null;
     }
 }
 

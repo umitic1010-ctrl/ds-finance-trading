@@ -1,6 +1,19 @@
 package net.froihofer.dsfinance.bank.ejb.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -11,13 +24,13 @@ import java.util.List;
  */
 @Entity
 @Table(name = "customer", indexes = {
-    @Index(name = "idx_customer_number", columnList = "customer_number", unique = true),
-    @Index(name = "idx_customer_name", columnList = "last_name, first_name")
+    @Index(name = "idx_customer_number", columnList = "customer_number", unique = true)
 })
 @NamedQueries({
     @NamedQuery(name = "Customer.findAll", query = "SELECT c FROM Customer c"),
     @NamedQuery(name = "Customer.findByCustomerNumber", query = "SELECT c FROM Customer c WHERE c.customerNumber = :customerNumber"),
-    @NamedQuery(name = "Customer.findByName", query = "SELECT c FROM Customer c WHERE LOWER(c.firstName) LIKE LOWER(:name) OR LOWER(c.lastName) LIKE LOWER(:name)")
+    @NamedQuery(name = "Customer.findByName", query = "SELECT c FROM Customer c WHERE LOWER(c.person.firstName) LIKE LOWER(:name) OR LOWER(c.person.lastName) LIKE LOWER(:name)"),
+    @NamedQuery(name = "Customer.findByPersonId", query = "SELECT c FROM Customer c WHERE c.person.id = :personId")
 })
 public class Customer implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -28,12 +41,6 @@ public class Customer implements Serializable {
 
     @Column(name = "customer_number", unique = true, nullable = false, length = 50)
     private String customerNumber;
-
-    @Column(name = "first_name", nullable = false, length = 100)
-    private String firstName;
-
-    @Column(name = "last_name", nullable = false, length = 100)
-    private String lastName;
 
     @Column(name = "address", length = 255)
     private String address;
@@ -47,9 +54,6 @@ public class Customer implements Serializable {
     @Column(name = "postal_code", length = 40)
     private String postalCode;
 
-    @Column(name = "email", length = 100)
-    private String email;
-
     @Column(name = "phone_number", length = 50)
     private String phoneNumber;
 
@@ -59,16 +63,18 @@ public class Customer implements Serializable {
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "person_id", nullable = false, unique = true)
+    private Person person;
+
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DepotPosition> depotPositions = new ArrayList<>();
 
     public Customer() {
     }
 
-    public Customer(String customerNumber, String firstName, String lastName, String address) {
+    public Customer(String customerNumber, String address) {
         this.customerNumber = customerNumber;
-        this.firstName = firstName;
-        this.lastName = lastName;
         this.address = address;
     }
 
@@ -87,22 +93,6 @@ public class Customer implements Serializable {
 
     public void setCustomerNumber(String customerNumber) {
         this.customerNumber = customerNumber;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
     }
 
     public String getAddress() {
@@ -137,20 +127,20 @@ public class Customer implements Serializable {
         this.postalCode = postalCode;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
     public String getPhoneNumber() {
         return phoneNumber;
     }
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public Person getPerson() {
+        return person;
+    }
+
+    public void setPerson(Person person) {
+        this.person = person;
     }
 
     public String getStatus() {

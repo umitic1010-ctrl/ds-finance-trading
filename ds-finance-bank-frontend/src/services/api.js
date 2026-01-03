@@ -1,4 +1,4 @@
-import apiClient, { createAuthClient } from './apiClient';
+import apiClient from './apiClient';
 import { ENDPOINTS } from '../config/api';
 
 // Bank Services
@@ -25,9 +25,8 @@ export const tradingService = {
 
 export const authService = {
   validate: () => apiClient.get(ENDPOINTS.AUTH_ME).then((res) => res.data).catch(() => null),
-  login: async (username, password) => {
-    const client = createAuthClient(username, password);
-    const { data } = await client.get(ENDPOINTS.AUTH_ME);
-    return { username: data.username, role: data.role };
+  login: async (email, password) => {
+    const { data } = await apiClient.post(ENDPOINTS.AUTH_LOGIN, { email, password });
+    return data;
   },
 };

@@ -1,5 +1,6 @@
 package net.froihofer.dsfinance.bank.ejb.dao;
 
+import jakarta.annotation.security.PermitAll;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 @Stateless
+@PermitAll
 public class DepotPositionDao {
     private static final Logger log = LoggerFactory.getLogger(DepotPositionDao.class);
 

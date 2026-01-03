@@ -1,5 +1,6 @@
 package net.froihofer.dsfinance.bank.ejb.dao;
 
+import jakarta.annotation.security.PermitAll;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 @Stateless
+@PermitAll
 public class CustomerDao {
     private static final Logger log = LoggerFactory.getLogger(CustomerDao.class);
 
@@ -46,6 +48,14 @@ public class CustomerDao {
         TypedQuery<Customer> query = em.createNamedQuery("Customer.findByName", Customer.class);
         query.setParameter("name", "%" + name + "%");
         return query.getResultList();
+    }
+
+    public Customer findByPersonId(Long personId) {
+        log.debug("Finding customer by person id {}", personId);
+        TypedQuery<Customer> query = em.createNamedQuery("Customer.findByPersonId", Customer.class);
+        query.setParameter("personId", personId);
+        List<Customer> customers = query.getResultList();
+        return customers.isEmpty() ? null : customers.get(0);
     }
 
     public List<Customer> findAll() {

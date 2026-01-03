@@ -7,6 +7,8 @@
     <class>net.froihofer.dsfinance.bank.ejb.entity.Customer</class>
     <class>net.froihofer.dsfinance.bank.ejb.entity.DepotPosition</class>
     <class>net.froihofer.dsfinance.bank.ejb.entity.BankVolume</class>
+    <class>net.froihofer.dsfinance.bank.ejb.entity.Person</class>
+    <class>net.froihofer.dsfinance.bank.ejb.entity.Employee</class>
     <properties>
       <property name="jakarta.persistence.schema-generation.database.action" value="none"/>
       <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
