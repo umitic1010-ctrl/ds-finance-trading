@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   TextField,
   Button,
+  CircularProgress,
   Table,
   TableBody,
   TableCell,
@@ -26,6 +27,7 @@ const CustomerManagement = () => {
   const [searchName, setSearchName] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [isLoading, setIsLoading] = useState(false);
 
   const [newCustomer, setNewCustomer] = useState({
     customerNumber: '',
@@ -37,13 +39,16 @@ const CustomerManagement = () => {
     password: ''
   });
 
-  const handleSearch = async () => {
+  const handleSearch = async ({ silent } = {}) => {
     const term = searchName.trim();
     try {
+      setIsLoading(true);
       if (!term) {
         const { data } = await customerService.getAll();
         setCustomers(Array.isArray(data) ? data : []);
-        setMessage({ text: `${data.length || 0} Kunden gefunden`, type: 'success' });
+        if (!silent) {
+          setMessage({ text: `${data.length || 0} Kunden gefunden`, type: 'success' });
+        }
         return;
       }
 
@@ -71,14 +76,19 @@ const CustomerManagement = () => {
 
       const merged = Array.from(resultsMap.values());
       setCustomers(merged);
-      setMessage({ text: `${merged.length} Kunden gefunden`, type: merged.length ? 'success' : 'warning' });
+      if (!silent) {
+        setMessage({ text: `${merged.length} Kunden gefunden`, type: merged.length ? 'success' : 'warning' });
+      }
     } catch (error) {
       setMessage({ text: error.response?.data?.error || 'Fehler beim Laden der Kunden', type: 'error' });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleCreateCustomer = async () => {
     try {
+      setIsLoading(true);
       await customerService.create(newCustomer);
       setMessage({ text: 'Kunde erfolgreich angelegt!', type: 'success' });
       setOpenDialog(false);
@@ -94,8 +104,15 @@ const CustomerManagement = () => {
       handleSearch();
     } catch (error) {
       setMessage({ text: error.response?.data?.error || 'Fehler beim Anlegen des Kunden', type: 'error' });
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    handleSearch({ silent: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Box>
@@ -111,6 +128,7 @@ const CustomerManagement = () => {
           variant="contained"
           startIcon={<SearchIcon />}
           onClick={handleSearch}
+          disabled={isLoading}
         >
           Suchen
         </Button>
@@ -119,6 +137,7 @@ const CustomerManagement = () => {
           color="success"
           startIcon={<PersonAddIcon />}
           onClick={() => setOpenDialog(true)}
+          disabled={isLoading}
         >
           Neuer Kunde
         </Button>
@@ -142,7 +161,16 @@ const CustomerManagement = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {customers.length === 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, py: 2 }}>
+                    <CircularProgress size={20} />
+                    <Typography color="text.secondary">Lade Kunden...</Typography>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ) : customers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} align="center">
                   <Typography color="text.secondary">
