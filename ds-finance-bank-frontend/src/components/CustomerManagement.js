@@ -30,7 +30,6 @@ const CustomerManagement = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const [newCustomer, setNewCustomer] = useState({
-    customerNumber: '',
     firstName: '',
     lastName: '',
     address: '',
@@ -93,7 +92,6 @@ const CustomerManagement = () => {
       setMessage({ text: 'Kunde erfolgreich angelegt!', type: 'success' });
       setOpenDialog(false);
       setNewCustomer({
-        customerNumber: '',
         firstName: '',
         lastName: '',
         address: '',
@@ -199,14 +197,6 @@ const CustomerManagement = () => {
         <DialogContent>
           <TextField
             autoFocus
-            margin="dense"
-            label="Kundennummer"
-            fullWidth
-            variant="outlined"
-            value={newCustomer.customerNumber}
-            onChange={(e) => setNewCustomer({ ...newCustomer, customerNumber: e.target.value })}
-          />
-          <TextField
             margin="dense"
             label="Vorname"
             fullWidth

@@ -74,8 +74,13 @@ public class CustomerService {
         person.setPasswordIterations(hash.iterations());
         personDao.persist(person);
 
+        String customerNumber = customerDTO.getCustomerNumber();
+        if (customerNumber == null || customerNumber.isBlank()) {
+            customerNumber = generateCustomerNumber();
+        }
+
         Customer customer = new Customer(
-            customerDTO.getCustomerNumber(),
+            customerNumber,
             customerDTO.getAddress()
         );
         customer.setPerson(person);
@@ -156,5 +161,13 @@ public class CustomerService {
         dto.setStatus(customer.getStatus());
         dto.setCreatedAt(customer.getCreatedAt() != null ? customer.getCreatedAt().toString() : null);
         return dto;
+    }
+
+    private String generateCustomerNumber() {
+        String candidate;
+        do {
+            candidate = "CUST-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        } while (customerDao.findByCustomerNumber(candidate) != null);
+        return candidate;
     }
 }

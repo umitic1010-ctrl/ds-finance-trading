@@ -165,9 +165,6 @@ public class EmployeeBankingBean implements EmployeeBankingRemote {
         if (customer == null) {
             throw new BankingException("Customer payload is required");
         }
-        if (isNullOrBlank(customer.getCustomerNumber())) {
-            throw new BankingException("Customer number is required");
-        }
         if (isNullOrBlank(customer.getFirstName()) || isNullOrBlank(customer.getLastName())) {
             throw new BankingException("Customer first and last name are required");
         }
