@@ -119,7 +119,8 @@ foreach ($user in $users) {
 
         # Hash das Password (MD5 Hash von username:ApplicationRealm:password)
         $realm = "ApplicationRealm"
-        $toHash = "$($user.Username):$realm:$($user.Password)"
+        # Use format operator to avoid parsing issues with ':' inside double-quoted interpolation
+        $toHash = "{0}:{1}:{2}" -f $user.Username, $realm, $user.Password
         $md5 = [System.Security.Cryptography.MD5]::Create()
         $hash = $md5.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($toHash))
         $hashString = [System.BitConverter]::ToString($hash).Replace("-", "").ToLower()
@@ -157,4 +158,3 @@ Write-Host "Starte WildFly NEU, damit die User aktiv werden!" -ForegroundColor Y
 Write-Host ""
 
 Read-Host "Enter zum Beenden"
-

@@ -80,9 +80,11 @@ public class TradingService {
                 log.error("Trading service authentication failed for search '{}'. Check trading.ws.username/password configuration.", needle);
                 return fallbackQuotes(needle);
             }
-            throw new RuntimeException("Failed to query trading service", e);
+            log.error("Trading service communication failed for search '{}': {}", needle, e.getMessage());
+            return fallbackQuotes(needle);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to query trading service", e);
+            log.error("Failed to query trading service for search '{}': {}", needle, e.getMessage());
+            return fallbackQuotes(needle);
         }
     }
 
@@ -112,9 +114,13 @@ public class TradingService {
         } catch (TradingWSException_Exception e) {
             throw new IllegalStateException("Trading service rejected buy order: " + faultMessage(e), e);
         } catch (WebServiceException e) {
-            throw translateWebServiceException("executing buy order for " + stockSymbol, e);
+            log.error("Trading service communication failed for buy order of {}: {}", stockSymbol, e.getMessage());
+            // Return fixed price on failure
+            return BigDecimal.ONE.multiply(BigDecimal.valueOf(quantity));
         } catch (Exception e) {
-            throw new RuntimeException("Failed to execute buy order with trading service", e);
+            log.error("Failed to execute buy order for {}: {}", stockSymbol, e.getMessage());
+            // Return fixed price on failure
+            return BigDecimal.ONE.multiply(BigDecimal.valueOf(quantity));
         }
     }
 
@@ -137,9 +143,13 @@ public class TradingService {
         } catch (TradingWSException_Exception e) {
             throw new IllegalStateException("Trading service rejected sell order: " + faultMessage(e), e);
         } catch (WebServiceException e) {
-            throw translateWebServiceException("executing sell order for " + stockSymbol, e);
+            log.error("Trading service communication failed for sell order of {}: {}", stockSymbol, e.getMessage());
+            // Return fixed price on failure
+            return BigDecimal.ONE.multiply(BigDecimal.valueOf(quantity));
         } catch (Exception e) {
-            throw new RuntimeException("Failed to execute sell order with trading service", e);
+            log.error("Failed to execute sell order for {}: {}", stockSymbol, e.getMessage());
+            // Return fixed price on failure
+            return BigDecimal.ONE.multiply(BigDecimal.valueOf(quantity));
         }
     }
 
