@@ -63,6 +63,27 @@ const TradingPanel = ({ isEmployee, customerNumber }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerNumber, isEmployee]);
 
+  // Auto-refresh depot every 10 seconds
+  useEffect(() => {
+    const custNum = effectiveCustomerNumber();
+    if (!custNum) {
+      console.log('[Auto-Refresh] No customer number, skipping');
+      return;
+    }
+
+    console.log('[Auto-Refresh] Setting up interval for customer:', custNum);
+    const intervalId = setInterval(() => {
+      console.log('[Auto-Refresh] Refreshing depot for:', custNum);
+      loadDepot(custNum);
+    }, 10000); // 10 seconds
+
+    return () => {
+      console.log('[Auto-Refresh] Cleaning up interval');
+      clearInterval(intervalId);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerNumber, tradeData.customerNumber, isEmployee]);
+
   const effectiveCustomerNumber = () => {
     if (isEmployee) {
       return (tradeData.customerNumber || '').trim();
@@ -92,7 +113,9 @@ const TradingPanel = ({ isEmployee, customerNumber }) => {
         setMessage({ text: 'Bitte geben Sie eine Kundennummer ein', type: 'warning' });
         return;
       }
+      console.log('[LoadDepot] Loading depot for customer:', customer);
       const { data } = await tradingService.getDepot(customer);
+      console.log('[LoadDepot] Depot loaded, total value:', data.totalValue);
       setDepot(data);
     } catch (error) {
       setMessage({ text: 'Fehler beim Laden des Depots', type: 'error' });

@@ -20,9 +20,9 @@
     <junit.version>4.13.2</junit.version>
     <flyway.version>9.22.3</flyway.version>
     <postgresql.version>42.7.3</postgresql.version>
-    <flyway.url>jdbc:postgresql://localhost:5432/ds_finance_bank</flyway.url>
-    <flyway.user>dsbank</flyway.user>
-    <flyway.password>dsbank</flyway.password>
+    <flyway.url>jdbc:postgresql://localhost:5432/dsfinancebank</flyway.url>
+    <flyway.user>dsfinanceuser</flyway.user>
+    <flyway.password>dsfinancepass</flyway.password>
     <flyway.baselineOnMigrate>false</flyway.baselineOnMigrate>
     <flyway.baselineVersion>1</flyway.baselineVersion>
   </properties>

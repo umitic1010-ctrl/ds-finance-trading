@@ -44,6 +44,15 @@
     <welcome-file>index.html</welcome-file>
   </welcome-file-list>
   
+  <!-- Allow unauthenticated access to login endpoint -->
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>Public API</web-resource-name>
+      <url-pattern>/api/auth/login</url-pattern>
+    </web-resource-collection>
+    <!-- No auth-constraint means publicly accessible -->
+  </security-constraint>
+  
   <!-- REST API authentication is handled by JWT filter, not container BASIC auth. -->
   <login-config>
     <auth-method>BASIC</auth-method>
