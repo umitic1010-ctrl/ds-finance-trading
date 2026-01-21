@@ -63,4 +63,11 @@ public class CustomerDao {
         TypedQuery<Customer> query = em.createNamedQuery("Customer.findAll", Customer.class);
         return query.getResultList();
     }
+
+    public void remove(Customer customer) {
+        log.debug("Removing customer {}", customer != null ? customer.getCustomerNumber() : "null");
+        if (customer != null) {
+            em.remove(em.contains(customer) ? customer : em.merge(customer));
+        }
+    }
 }

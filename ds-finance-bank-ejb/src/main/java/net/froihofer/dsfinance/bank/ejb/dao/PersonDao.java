@@ -37,4 +37,16 @@ public class PersonDao {
         List<Person> people = query.getResultList();
         return people.isEmpty() ? null : people.get(0);
     }
+
+    public Person merge(Person person) {
+        log.debug("Merging person {}", person != null ? person.getEmail() : "null");
+        return em.merge(person);
+    }
+
+    public void remove(Person person) {
+        log.debug("Removing person {}", person != null ? person.getEmail() : "null");
+        if (person != null) {
+            em.remove(em.contains(person) ? person : em.merge(person));
+        }
+    }
 }

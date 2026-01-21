@@ -1,0 +1,82 @@
+<h2 mat-dialog-title>{{ title }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="customerForm" class="customer-form">
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Vorname</mat-label>
+        <input matInput formControlName="firstName" placeholder="Max" />
+        @if (customerForm.get('firstName')?.invalid && customerForm.get('firstName')?.touched) {
+          <mat-error>{{ getErrorMessage('firstName') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Nachname</mat-label>
+        <input matInput formControlName="lastName" placeholder="Mustermann" />
+        @if (customerForm.get('lastName')?.invalid && customerForm.get('lastName')?.touched) {
+          <mat-error>{{ getErrorMessage('lastName') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>E-Mail</mat-label>
+      <input matInput type="email" formControlName="email" placeholder="max.mustermann@example.com" />
+      @if (customerForm.get('email')?.invalid && customerForm.get('email')?.touched) {
+        <mat-error>{{ getErrorMessage('email') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Adresse</mat-label>
+      <input matInput formControlName="address" placeholder="Musterstraße 123" />
+      @if (customerForm.get('address')?.invalid && customerForm.get('address')?.touched) {
+        <mat-error>{{ getErrorMessage('address') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>PLZ</mat-label>
+        <input matInput formControlName="postalCode" placeholder="1010" />
+        @if (customerForm.get('postalCode')?.invalid && customerForm.get('postalCode')?.touched) {
+          <mat-error>{{ getErrorMessage('postalCode') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Stadt</mat-label>
+        <input matInput formControlName="city" placeholder="Wien" />
+        @if (customerForm.get('city')?.invalid && customerForm.get('city')?.touched) {
+          <mat-error>{{ getErrorMessage('city') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Land</mat-label>
+        <input matInput formControlName="country" placeholder="Austria" />
+        @if (customerForm.get('country')?.invalid && customerForm.get('country')?.touched) {
+          <mat-error>{{ getErrorMessage('country') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Telefon</mat-label>
+        <input matInput formControlName="phoneNumber" placeholder="+43 123 456789" />
+        @if (customerForm.get('phoneNumber')?.invalid && customerForm.get('phoneNumber')?.touched) {
+          <mat-error>{{ getErrorMessage('phoneNumber') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Abbrechen</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="customerForm.invalid">
+    {{ mode === 'create' ? 'Anlegen' : 'Speichern' }}
+  </button>
+</mat-dialog-actions>

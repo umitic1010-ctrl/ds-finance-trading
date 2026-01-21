@@ -107,5 +107,56 @@ public class CustomerRestService {
                     .entity(new ErrorResponse(e.getMessage())).build();
         }
     }
+
+    /**
+     * Update customer
+     * PUT /api/customers/{customerNumber}
+     */
+    @PUT
+    @Path("/{customerNumber}")
+    public Response updateCustomer(@PathParam("customerNumber") String customerNumber, CustomerDTO customerDTO) {
+        try {
+            log.info("REST: Updating customer {}", customerNumber);
+            
+            CustomerDTO existing = customerService.findByCustomerNumber(customerNumber);
+            if (existing == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("Customer not found")).build();
+            }
+
+            customerDTO.setCustomerNumber(customerNumber);
+            CustomerDTO updated = customerService.updateCustomer(customerDTO);
+            return Response.ok(updated).build();
+        } catch (Exception e) {
+            log.error("Error updating customer", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse(e.getMessage())).build();
+        }
+    }
+
+    /**
+     * Delete customer
+     * DELETE /api/customers/{customerNumber}
+     */
+    @DELETE
+    @Path("/{customerNumber}")
+    public Response deleteCustomer(@PathParam("customerNumber") String customerNumber) {
+        try {
+            log.info("REST: Deleting customer {}", customerNumber);
+            
+            CustomerDTO existing = customerService.findByCustomerNumber(customerNumber);
+            if (existing == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("Customer not found")).build();
+            }
+
+            customerService.deleteCustomer(customerNumber);
+            return Response.noContent().build();
+        } catch (Exception e) {
+            log.error("Error deleting customer", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse(e.getMessage())).build();
+        }
+    }
 }
 

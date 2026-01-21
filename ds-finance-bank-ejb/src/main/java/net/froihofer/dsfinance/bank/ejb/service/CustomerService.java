@@ -170,4 +170,85 @@ public class CustomerService {
         } while (customerDao.findByCustomerNumber(candidate) != null);
         return candidate;
     }
+
+    /**
+     * Update customer
+     */
+    public CustomerDTO updateCustomer(CustomerDTO customerDTO) {
+        log.info("Updating customer: {}", customerDTO.getCustomerNumber());
+
+        if (customerDTO.getCustomerNumber() == null || customerDTO.getCustomerNumber().isBlank()) {
+            throw new IllegalArgumentException("Customer number is required");
+        }
+
+        Customer customer = customerDao.findByCustomerNumber(customerDTO.getCustomerNumber());
+        if (customer == null) {
+            throw new IllegalArgumentException("Customer not found: " + customerDTO.getCustomerNumber());
+        }
+
+        // Update Person data
+        if (customer.getPerson() != null) {
+            Person person = customer.getPerson();
+            if (customerDTO.getFirstName() != null) {
+                person.setFirstName(customerDTO.getFirstName());
+            }
+            if (customerDTO.getLastName() != null) {
+                person.setLastName(customerDTO.getLastName());
+            }
+            if (customerDTO.getEmail() != null) {
+                person.setEmail(customerDTO.getEmail());
+            }
+            personDao.merge(person);
+        }
+
+        // Update Customer data
+        if (customerDTO.getAddress() != null) {
+            customer.setAddress(customerDTO.getAddress());
+        }
+        if (customerDTO.getPhoneNumber() != null) {
+            customer.setPhoneNumber(customerDTO.getPhoneNumber());
+        }
+        if (customerDTO.getCity() != null) {
+            customer.setCity(customerDTO.getCity());
+        }
+        if (customerDTO.getCountry() != null) {
+            customer.setCountry(customerDTO.getCountry());
+        }
+        if (customerDTO.getPostalCode() != null) {
+            customer.setPostalCode(customerDTO.getPostalCode());
+        }
+        if (customerDTO.getStatus() != null) {
+            customer.setStatus(customerDTO.getStatus());
+        }
+
+        customerDao.merge(customer);
+
+        return toDTO(customer);
+    }
+
+    /**
+     * Delete customer by customer number
+     */
+    public void deleteCustomer(String customerNumber) {
+        log.info("Deleting customer: {}", customerNumber);
+
+        if (customerNumber == null || customerNumber.isBlank()) {
+            throw new IllegalArgumentException("Customer number is required");
+        }
+
+        Customer customer = customerDao.findByCustomerNumber(customerNumber);
+        if (customer == null) {
+            throw new IllegalArgumentException("Customer not found: " + customerNumber);
+        }
+
+        // Delete customer (cascading will handle person deletion if configured)
+        customerDao.remove(customer);
+
+        // If person should be deleted separately
+        if (customer.getPerson() != null) {
+            personDao.remove(customer.getPerson());
+        }
+
+        log.info("Customer {} successfully deleted", customerNumber);
+    }
 }

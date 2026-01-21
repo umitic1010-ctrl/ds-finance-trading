@@ -87,6 +87,33 @@ public class EmployeeBankingBean implements EmployeeBankingRemote {
         }
     }
 
+    public void deleteCustomer(String customerNumber) throws BankingException {
+        if (customerNumber == null || customerNumber.isBlank()) {
+            throw new BankingException("Customer number must not be empty");
+        }
+        try {
+            customerService.deleteCustomer(customerNumber.trim());
+        } catch (IllegalArgumentException e) {
+            throw new BankingException(e.getMessage(), e);
+        } catch (Exception e) {
+            throw new BankingException("Failed to delete customer", e);
+        }
+    }
+
+    public void updateCustomer(CustomerDTO customer) throws BankingException {
+        requireCustomerDetails(customer);
+        if (customer.getCustomerNumber() == null || customer.getCustomerNumber().isBlank()) {
+            throw new BankingException("Customer number must not be empty");
+        }
+        try {
+            customerService.updateCustomer(customer);
+        } catch (IllegalArgumentException e) {
+            throw new BankingException(e.getMessage(), e);
+        } catch (Exception e) {
+            throw new BankingException("Failed to update customer", e);
+        }
+    }
+
     @Override
     public CustomerDTO findCustomer(String customerNumber) throws BankingException {
         if (customerNumber == null || customerNumber.isBlank()) {
